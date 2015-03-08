@@ -1,0 +1,16 @@
+{
+  "name": "content-crawl",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "crawler": "^0.4.1",
+    "mkpath": "^0.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "michaelroth<mr.hroth@gmail.com>",
+  "license": "ISC"
+}
