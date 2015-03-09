@@ -5,16 +5,14 @@
 //
 
 // --- globals --- //
-// crawler
-var UA = 'HighbridgeCreativeBot/1.0 (+http://highbridgecreative.com/bot.html)';
+var config = require('./config');
+var UA = config.ua;
 var Crawler = require("crawler");
 var fs = require('fs');
 var mkpath = require('mkpath');
 
-// site data
-var DOMAIN = 'http://www.brbrtfo.com';
-var nav = ['http://www.brbrtfo.com/'];
-var data = [];
+// url queue
+var nav = [config.url];
 
 // ----- crawler helper functions ----- //
 
@@ -31,46 +29,11 @@ var process = function($, page, callback) {
     var page = page || 'home';
     var cb = callback || function(){};
 
-    // get page data
-    var title = $('head title').text();
-    var keywords = $('head meta[name=keywords]').attr('content');
-    var desc = $('head meta[name=description]').attr('content');
+    
+    // --- aggregator ---- //
+    var data = require('./aggregators/'+config.aggregator)($, page);
 
-    // build this page
-    var data = {
-        title : title,
-        meta: {
-            title : title,
-            keywords : keywords,
-            desc: desc
-        },
-        headers : [],
-        text : [],
-        images : []
-    };
-
-    // headers
-    var hTags = $('h1,h2,h3,h4,h5,h6,header');
-    $(hTags).each(function(i, h){
-        var header = {
-            type : h.nodeName,
-            text : $(h).text().trim()
-        };
-        data.headers.push(header);
-    });
-
-    // content
-    var cTags = $('p,section,.section');
-    $(cTags).each(function(i, c){
-        data.text.push($(c).text().trim());
-    });
-
-    // images
-    $('img').each(function(i, image){
-        data.images.push($(image).attr('src'));
-    });
-
-    // write data to a page file
+    // write data to a page filen
     var path = page.split('/');
     var filename = path.pop() || page;
     var dir = './tmp/site';
@@ -111,8 +74,9 @@ var crawl = function(err, res, $) {
 
     // traverse the page
     // building the data
-    var page = res.uri.replace(DOMAIN,'');
-    page = page.replace(/^http\:\/\/|^\/|\#.*|\/$/g,'');
+    var page = res.uri.replace(config.url,'');
+    // TODO remove query params?
+    page = page.replace(/^http\:\/\/|^\/|\#.*|\?.*|\/$/g,'');
     page = page.replace(/\/$/,'');
 
     process($, page, function() {
@@ -124,13 +88,13 @@ var crawl = function(err, res, $) {
             var url = false;
             var href = $(a).attr('href');
 
-            // stay on this domain
-            if(a.hostname && a.hostname == DOMAIN){
+            // stay on this config.url
+            if(a.hostname && (config.protocol + a.hostname) == config.url){
                 url = href;
             } else {
                 var valid = /^\/.*/;
                 if(href && valid.test(href) ) {
-                    url = DOMAIN + href;
+                    url = config.url + href;
                 }
             }
             
